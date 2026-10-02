@@ -1,21 +1,24 @@
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Link, useRouter } from '@/context/RouterContext';
-import { Lock, Mail, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, AlertCircle, UserPlus } from 'lucide-react';
 
 export function AdminLoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, signUp } = useAuth();
   const { navigate } = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [mode, setMode] = useState<'login' | 'signup'>('login');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    const { error } = await signIn(email, password);
+    const { error } = mode === 'login'
+      ? await signIn(email, password)
+      : await signUp(email, password);
     setLoading(false);
     if (error) {
       setError(error);
@@ -32,9 +35,13 @@ export function AdminLoginPage() {
         </Link>
 
         <div className="bg-white border border-gray-200 rounded-xl p-8">
-          <h1 className="text-xl font-bold text-gray-900 text-center mb-1">Admin Login</h1>
+          <h1 className="text-xl font-bold text-gray-900 text-center mb-1">
+            {mode === 'login' ? 'Admin Login' : 'Create Admin Account'}
+          </h1>
           <p className="text-sm text-gray-500 text-center mb-6">
-            Sign in to access submissions
+            {mode === 'login'
+              ? 'Sign in to access submissions'
+              : 'Set up your first admin account'}
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -59,6 +66,7 @@ export function AdminLoginPage() {
                 <input
                   type="password"
                   required
+                  minLength={6}
                   className="input-field pl-10"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -75,9 +83,31 @@ export function AdminLoginPage() {
             )}
 
             <button type="submit" disabled={loading} className="btn-primary w-full">
-              {loading ? 'Signing in…' : 'Sign In'} <ArrowRight className="w-4 h-4" />
+              {loading
+                ? (mode === 'login' ? 'Signing in…' : 'Creating account…')
+                : (mode === 'login' ? 'Sign In' : 'Create Account')}
+              <ArrowRight className="w-4 h-4" />
             </button>
           </form>
+
+          <div className="mt-5 pt-5 border-t border-gray-100 text-center">
+            {mode === 'login' ? (
+              <button
+                onClick={() => { setMode('signup'); setError(null); }}
+                className="text-sm text-gray-500 hover:text-accent transition-colors inline-flex items-center gap-1.5"
+              >
+                <UserPlus className="w-4 h-4" />
+                No account? Create one
+              </button>
+            ) : (
+              <button
+                onClick={() => { setMode('login'); setError(null); }}
+                className="text-sm text-gray-500 hover:text-accent transition-colors"
+              >
+                Already have an account? Sign in
+              </button>
+            )}
+          </div>
         </div>
 
         <p className="mt-6 text-center text-xs text-gray-400">
